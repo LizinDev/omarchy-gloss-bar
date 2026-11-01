@@ -2,16 +2,20 @@
   "schemaVersion": 1,
   "id": "io.github.lizindev.gloss-bar",
   "name": "Gloss Bar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "LizinDev",
-  "description": "The Omarchy bar with glossy capsules behind each section when the theme asks for them",
-  "kinds": [
-    "bar"
-  ],
+  "description": "Glossy capsules behind the bar's widget groups, drawn when the theme asks for them",
+  "kinds": ["bar-widget"],
   "entryPoints": {
-    "bar": "Bar.qml"
+    "barWidget": "Widget.qml"
   },
-  "omarchy": {
-    "clonedFrom": "omarchy.bar"
+  "barWidget": {
+    "displayName": "Gloss Bar",
+    "description": "Takes no room in the bar. When the theme ships a [gloss-bar] section, draws a glossy capsule behind each group of adjacent widgets, on a layer under the bar.",
+    "category": "Appearance",
+    "allowMultiple": false,
+    "defaultSection": "left",
+    "defaults": {},
+    "schema": []
   }
 }

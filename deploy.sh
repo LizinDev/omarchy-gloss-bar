@@ -1,6 +1,6 @@
 #!/bin/bash
 # Install the plugin into Omarchy's plugin folder (a copy: the shell does not
-# follow a symlinked plugin folder) and switch the bar to it.
+# follow a symlinked plugin folder) and put the widget in the bar.
 set -euo pipefail
 src="$(cd "$(dirname "$0")" && pwd)/plugin"
 id=$(jq -r .id "$src/manifest.json")
@@ -11,4 +11,4 @@ cp -a "$src" "$dest.new"
 rm -rf "$dest"
 mv "$dest.new" "$dest"
 omarchy-shell shell rescanPlugins >/dev/null
-[[ ${1:-} == --no-enable ]] || omarchy plugin enable "$id"
+[[ ${1:-} == --no-enable ]] || omarchy plugin enable "$id" --section left
