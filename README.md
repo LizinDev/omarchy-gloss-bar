@@ -55,3 +55,8 @@ For real glass, blur the layer in the theme's `hyprland.lua`:
 ```lua
 hl.layer_rule({ match = { namespace = "omarchy-gloss-bar" }, blur = true, ignore_alpha = 0.2 })
 ```
+
+## License
+
+MIT, with Omarchy's copyright kept: the widget borrows the capsule drawing from, and
+version 0.1 was a clone of, Omarchy's built-in bar (© David Heinemeier Hansson).
