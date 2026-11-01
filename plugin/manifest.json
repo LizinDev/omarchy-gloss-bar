@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.lizindev.gloss-bar",
+  "name": "Gloss Bar",
+  "version": "0.1.0",
+  "author": "LizinDev",
+  "description": "The Omarchy bar with glossy capsules behind each section when the theme asks for them",
+  "kinds": [
+    "bar"
+  ],
+  "entryPoints": {
+    "bar": "Bar.qml"
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.bar"
+  }
+}
