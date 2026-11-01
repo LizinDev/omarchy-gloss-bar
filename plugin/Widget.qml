@@ -37,10 +37,20 @@ BarWidget {
   readonly property color fillBottom: value("fill-bottom", Qt.lighter(fill, 1.22))
   readonly property real fillAlpha: num("fill-alpha", 1.0)
   readonly property color rim: value("rim", Qt.darker(fill, 1.45))
+  readonly property real rimAlpha: num("rim-alpha", 1.0)
   readonly property color shadow: value("shadow", "#000000")
   readonly property real shadowAlpha: num("shadow-alpha", 0.18)
+  readonly property real shadowOffset: num("shadow-offset", 2)
   readonly property real shine: num("shine-alpha", 0.7)
+  // "band": an inset pill-shaped highlight (Aqua gel). "glare": the top half
+  // of the capsule itself catches the light, cut straight across (glass).
+  readonly property string shineStyle: String(value("shine-style", "band"))
   readonly property real glow: num("glow-alpha", 0.35)
+  // Hairlines just inside the edge: a specular line along the top and a
+  // colored glow line along the bottom, both fading out toward the ends.
+  readonly property real edgeLight: num("edge-light-alpha", 0)
+  readonly property color edgeGlow: value("edge-glow", Color.accent)
+  readonly property real edgeGlowAlpha: num("edge-glow-alpha", 0)
   readonly property int inset: Math.round(num("inset", 3))
   readonly property int padding: Math.round(num("padding", 6))
   // Slots closer than this belong to the same capsule.
@@ -149,18 +159,19 @@ BarWidget {
         readonly property real radius: height / 2
 
         Rectangle {
-          y: 2
+          y: root.shadowOffset
           width: parent.width
           height: parent.height
           radius: capsule.radius
           color: Util.alpha(root.shadow, root.shadowAlpha)
+          visible: root.shadowAlpha > 0
         }
 
         Rectangle {
           anchors.fill: parent
           radius: capsule.radius
           border.width: 1
-          border.color: root.rim
+          border.color: Util.alpha(root.rim, root.rimAlpha)
           gradient: Gradient {
             GradientStop { position: 0.0; color: Util.alpha(root.fillTop, root.fillAlpha) }
             GradientStop { position: 0.5; color: Util.alpha(root.fill, root.fillAlpha) }
@@ -170,6 +181,7 @@ BarWidget {
 
         // glow pooled at the bottom, light bouncing up through the plastic
         Rectangle {
+          visible: root.glow > 0
           anchors.left: parent.left
           anchors.right: parent.right
           anchors.bottom: parent.bottom
@@ -184,6 +196,7 @@ BarWidget {
 
         // highlight band across the top half
         Rectangle {
+          visible: root.shineStyle !== "glare" && root.shine > 0
           anchors.top: parent.top
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.topMargin: Math.max(1, Math.round(parent.height * 0.07))
@@ -193,6 +206,60 @@ BarWidget {
           gradient: Gradient {
             GradientStop { position: 0.0; color: Util.alpha("#ffffff", root.shine) }
             GradientStop { position: 1.0; color: Util.alpha("#ffffff", root.shine * 0.08) }
+          }
+        }
+
+        // glare: the capsule's own shape, lit on its top half only
+        Item {
+          visible: root.shineStyle === "glare" && root.shine > 0
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.top: parent.top
+          anchors.margins: 1
+          height: Math.round(parent.height * 0.5)
+          clip: true
+
+          Rectangle {
+            width: parent.width
+            height: capsule.height - 2
+            radius: height / 2
+            gradient: Gradient {
+              GradientStop { position: 0.0; color: Util.alpha("#ffffff", root.shine) }
+              GradientStop { position: 0.5; color: Util.alpha("#ffffff", root.shine * 0.15) }
+            }
+          }
+        }
+
+        // specular hairline along the top edge
+        Rectangle {
+          visible: root.edgeLight > 0
+          anchors.top: parent.top
+          anchors.topMargin: 1
+          anchors.horizontalCenter: parent.horizontalCenter
+          width: parent.width - capsule.radius * 1.4
+          height: 1
+          gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: Util.alpha("#ffffff", 0) }
+            GradientStop { position: 0.3; color: Util.alpha("#ffffff", root.edgeLight) }
+            GradientStop { position: 0.7; color: Util.alpha("#ffffff", root.edgeLight) }
+            GradientStop { position: 1.0; color: Util.alpha("#ffffff", 0) }
+          }
+        }
+
+        // colored glow hairline along the bottom edge
+        Rectangle {
+          visible: root.edgeGlowAlpha > 0
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: 1
+          anchors.horizontalCenter: parent.horizontalCenter
+          width: parent.width - capsule.radius * 2
+          height: 1
+          gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: Util.alpha(root.edgeGlow, 0) }
+            GradientStop { position: 0.5; color: Util.alpha(root.edgeGlow, root.edgeGlowAlpha) }
+            GradientStop { position: 1.0; color: Util.alpha(root.edgeGlow, 0) }
           }
         }
       }

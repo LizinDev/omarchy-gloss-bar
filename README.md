@@ -41,19 +41,28 @@ fill         = "#e2600a"   # defaults to the theme accent
 fill-bottom  = "#ffb066"
 fill-alpha   = 0.62        # < 1 lets Hyprland blur show through (add a layer blur rule)
 rim          = "#ffd2a6"   # 1 px outline
+rim-alpha    = 1.0
 shadow       = "#3a1000"
 shadow-alpha = 0.25
-shine-alpha  = 0.8         # white highlight band across the top half
+shadow-offset = 2
+shine-style  = "band"      # "band": inset gel highlight; "glare": the top half of the glass lit
+shine-alpha  = 0.8         # strength of that highlight
 glow-alpha   = 0.4         # white glow pooled at the bottom
+edge-light-alpha = 0       # specular hairline along the top edge
+edge-glow    = "#ffd23f"   # colored hairline along the bottom edge (defaults to the accent)
+edge-glow-alpha = 0
 inset        = 4           # capsule gap from the bar's top and bottom edges
 padding      = 8           # horizontal padding around each group
 join-gap     = 24          # slots closer than this share a capsule
 ```
 
-For real glass, blur the layer in the theme's `hyprland.lua`:
+The defaults draw opaque Aqua gel. For glass, use a low `fill-alpha`, `shine-style =
+"glare"` and the hairlines, and blur the layer in the theme's `hyprland.lua`. Keep
+`ignore_alpha` near zero, or a see-through body falls under the threshold and is not
+blurred at all:
 
 ```lua
-hl.layer_rule({ match = { namespace = "omarchy-gloss-bar" }, blur = true, ignore_alpha = 0.2 })
+hl.layer_rule({ match = { namespace = "omarchy-gloss-bar" }, blur = true, ignore_alpha = 0.01 })
 ```
 
 ## License
