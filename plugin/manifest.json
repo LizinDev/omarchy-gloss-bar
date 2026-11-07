@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.lizindev.gloss-bar",
   "name": "Gloss Bar",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "LizinDev",
   "description": "Glossy capsules behind the bar's widget groups, drawn when the theme asks for them",
   "kinds": ["bar-widget"],

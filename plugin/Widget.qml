@@ -66,23 +66,64 @@ BarWidget {
   property var capsules: []
   property string capsulesKey: ""
 
+  // Geometry is followed rather than polled. Every slot is watched for moves,
+  // resizes and visibility, every container above one for the same (a
+  // section that re-centers moves its slots without touching them), and
+  // every container for children coming and going. A slow sweep stays as a
+  // net for anything that reshapes the tree some other way.
+  property var slots: []
+  property var watched: []
+
   // A slot is the host's per-entry wrapper: it carries the entry, its region
   // and the widget id. Stop there; the widget inside is the slot's business.
   function isSlot(item) {
     return typeof item.moduleName === "string" && item.region !== undefined && item.entry !== undefined
   }
 
-  function collectSlots(item, out) {
+  // Slots are kept even while hidden, since one can turn visible later;
+  // `visible` reads false under a hidden parent, so measure() filters them.
+  function walk(item, foundSlots, entries) {
     var kids = item.children
+    var holds = false
     for (var i = 0; i < kids.length; i++) {
       var child = kids[i]
-      if (!child || !child.visible) continue
+      if (!child) continue
       if (isSlot(child)) {
-        if (child.width >= 1 && child.moduleName !== root.moduleName) out.push(child)
+        if (child.moduleName === root.moduleName) continue
+        foundSlots.push(child)
+        entries.push({ item: child, geometry: true, children: false })
+        holds = true
       } else {
-        collectSlots(child, out)
+        var mark = entries.length
+        entries.push({ item: child, geometry: false, children: true })
+        if (walk(child, foundSlots, entries)) {
+          entries[mark].geometry = true
+          holds = true
+        }
       }
     }
+    return holds
+  }
+
+  function sameItems(a, b) {
+    if (a.length !== b.length) return false
+    for (var i = 0; i < a.length; i++)
+      if (a[i].item !== b[i].item || a[i].geometry !== b[i].geometry) return false
+    return true
+  }
+
+  function rescan() {
+    if (!enabled || !host) {
+      if (watched.length) { watched = []; slots = [] }
+      measure()
+      return
+    }
+    var foundSlots = []
+    var entries = [{ item: host, geometry: true, children: true }]
+    walk(host, foundSlots, entries)
+    if (!sameItems(entries, watched)) watched = entries
+    slots = foundSlots
+    measure()
   }
 
   function measure() {
@@ -90,12 +131,12 @@ BarWidget {
       if (capsulesKey !== "") { capsules = []; capsulesKey = "" }
       return
     }
-    var slots = []
-    collectSlots(host, slots)
     var spans = []
     for (var i = 0; i < slots.length; i++) {
-      var p = slots[i].mapToItem(host, 0, 0)
-      spans.push({ x: p.x, right: p.x + slots[i].width })
+      var slot = slots[i]
+      if (!slot || !slot.visible || slot.width < 1) continue
+      var p = slot.mapToItem(host, 0, 0)
+      spans.push({ x: p.x, right: p.x + slot.width })
     }
     spans.sort(function(a, b) { return a.x - b.x })
     var groups = []
@@ -118,14 +159,36 @@ BarWidget {
     if (key !== capsulesKey) { capsulesKey = key; capsules = next }
   }
 
+  // Qt.callLater coalesces: a burst of moves in one pass measures once.
+  function scheduleMeasure() { Qt.callLater(root.measure) }
+  function scheduleRescan() { Qt.callLater(root.rescan) }
+
+  Instantiator {
+    model: root.watched
+
+    delegate: Connections {
+      required property var modelData
+      target: modelData.item
+      ignoreUnknownSignals: true
+      function onXChanged() { if (modelData.geometry) root.scheduleMeasure() }
+      function onWidthChanged() { if (modelData.geometry) root.scheduleMeasure() }
+      function onVisibleChanged() { if (modelData.geometry) root.scheduleMeasure() }
+      function onChildrenChanged() { if (modelData.children) root.scheduleRescan() }
+    }
+  }
+
   Timer {
-    interval: 250
+    interval: 2000
     repeat: true
     running: root.enabled && !root.barParked
     triggeredOnStart: true
-    onTriggered: root.measure()
+    onTriggered: root.rescan()
   }
-  onEnabledChanged: root.measure()
+  onEnabledChanged: root.rescan()
+  onHostChanged: root.rescan()
+  onJoinGapChanged: root.measure()
+  onPaddingChanged: root.measure()
+  onInsetChanged: root.measure()
 
   PanelWindow {
     id: glossLayer
